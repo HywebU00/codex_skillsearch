@@ -1,4 +1,4 @@
-image: node:22
+image: node:22.13.0
 
 stages:
   - build
@@ -12,6 +12,9 @@ cache:
 
 build:
   stage: build
+  before_script:
+    - node -v
+    - npm -v
   script:
     - npm ci --cache .npm --prefer-offline
     - npm run build
