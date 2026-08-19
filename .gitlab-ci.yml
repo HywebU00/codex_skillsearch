@@ -1,17 +1,16 @@
-image: node:22.13.0
-
 stages:
   - build
   - deploy
 
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key: ${CI_COMMIT_REF_SLUG}-node22
   paths:
     - .npm/
     - node_modules/
 
 build:
   stage: build
+  image: node:22.13.0
   before_script:
     - node -v
     - npm -v
@@ -28,9 +27,13 @@ build:
 
 pages:
   stage: deploy
+  image: node:22.13.0
   needs:
     - job: build
       artifacts: true
+  before_script:
+    - node -v
+    - npm -v
   script:
     - rm -rf public
     - mkdir -p public
