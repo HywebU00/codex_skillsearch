@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { buildFallbackSkills, fetchOfficialSkills } from './skills-data.mjs';
+import { buildFallbackSkills } from './skills-data.mjs';
 
 type Skill = {
   name: string;
@@ -13,7 +13,10 @@ type Skill = {
   version: string;
   tags: string[];
   featured?: boolean;
+  repoUrl?: string;
 };
+
+type DataStatus = 'loading' | 'live' | 'fallback';
 
 const initialSkills: Skill[] = buildFallbackSkills();
 
@@ -36,19 +39,28 @@ export default function Home() {
   const [sort, setSort] = useState('精選優先');
   const [selected, setSelected] = useState<Skill | null>(null);
   const [skills, setSkills] = useState<Skill[]>(initialSkills);
+  const [dataStatus, setDataStatus] = useState<DataStatus>('loading');
+  const [updatedAt, setUpdatedAt] = useState('');
 
   useEffect(() => {
     let active = true;
 
-    fetchOfficialSkills()
-      .then((liveSkills) => {
+    fetch('/api/skills')
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to load skills');
+        return response.json();
+      })
+      .then((payload) => {
         if (active) {
-          setSkills(liveSkills as Skill[]);
+          setSkills(payload.skills as Skill[]);
+          setDataStatus(payload.status === 'live' ? 'live' : 'fallback');
+          setUpdatedAt(payload.updatedAt ?? '');
         }
       })
       .catch(() => {
         if (active) {
           setSkills(initialSkills);
+          setDataStatus('fallback');
         }
       });
 
@@ -82,7 +94,7 @@ export default function Home() {
             技能目錄
           </a>
           <a href='#guide'>使用指南</a>
-          <a href='https://github.com/openai/skills' target='_blank' rel='noreferrer'>
+          <a href='https://github.com/openai/plugins' target='_blank' rel='noreferrer'>
             GitHub ↗
           </a>
         </nav>
@@ -113,14 +125,16 @@ export default function Home() {
         </div>
         <div className='stats' aria-label='目錄統計'>
           <span>
-            <strong>{skills.length}</strong> 個範例技能
+            <strong>{skills.length}</strong> 個官方技能
           </span>
           <b>•</b>
           <span>
             <strong>5</strong> 個分類
           </span>
           <b>•</b>
-          <span className='verified'>● 已驗證來源</span>
+          <span className={`verified data-${dataStatus}`} title={updatedAt ? `更新時間：${new Date(updatedAt).toLocaleString('zh-TW')}` : undefined}>
+            ● {dataStatus === 'loading' ? '正在同步 GitHub' : dataStatus === 'live' ? 'GitHub 即時資料' : '使用備援資料'}
+          </span>
         </div>
       </section>
 
@@ -231,7 +245,7 @@ export default function Home() {
           <span className='logo'>◆</span>
           <span>Codex Skills</span>
         </div>
-        <p>技能資料為介面示範；實際可用項目以你的 Codex 環境為準。</p>
+        <p>資料來源：OpenAI 官方 GitHub；實際可用項目以你的 Codex 環境為準。</p>
         <a href='#top'>回到頂部 ↑</a>
       </footer>
 
@@ -258,6 +272,11 @@ export default function Home() {
               <code>請使用 ${selected.name} 協助我完成…</code>
               <button onClick={() => navigator.clipboard?.writeText(`請使用 $${selected.name} 協助我完成…`)}>複製</button>
             </div>
+            {selected.repoUrl && (
+              <a className='repo-link' href={selected.repoUrl} target='_blank' rel='noreferrer'>
+                在 GitHub 查看來源 ↗
+              </a>
+            )}
             <button className='primary' onClick={() => setSelected(null)}>
               完成
             </button>

@@ -203,6 +203,12 @@ a {
 .stats .verified {
   color: #087a60;
 }
+.stats .data-loading {
+  color: #6c776f;
+}
+.stats .data-fallback {
+  color: #a25a18;
+}
 .directory {
   max-width: 1320px;
   margin: auto;
@@ -657,6 +663,18 @@ footer a {
 .primary {
   width: 100%;
   background: var(--green-dark);
+}
+.repo-link {
+  display: block;
+  margin: -6px 0 16px;
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+.repo-link:hover {
+  text-decoration: underline;
 }
 @media (max-width: 960px) {
   .topbar nav {
